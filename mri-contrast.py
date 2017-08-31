@@ -2,8 +2,6 @@ from dolfin import *
 from cbcpost import *
 from cbcpost.utils import create_submesh, create_slice
 
-import func_interpolate as 
-
 #default values
 No_refinements=0 
 dt_val=0.1 
