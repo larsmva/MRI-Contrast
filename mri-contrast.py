@@ -80,10 +80,6 @@ I = 200
 while t < Tend-dt_val/2:
  
 
-  
-
-
-
   bc  = DirichletBC( V, I, boundary)  
   t += dt_val 
   bc.apply(A)
