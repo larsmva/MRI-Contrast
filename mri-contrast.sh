@@ -40,7 +40,7 @@ cleanup "cp -r $SCRATCH/nscm* $HOME/results"
 echo "SCRATCH is $SCRATCH"
 
 # Copy necessary files to $SCRATCH
-cp nscm.py pial_mesh.h5 pial_mesh.xdmf "C00.h5" "C01.h5" "C02.h5"  "C03.h5"  $SCRATCH
+cp mri-contrast.py parenchyma.h5 parenchyma.xdmf "MRI0.h5" "MRI1.h5" $SCRATCH
 
 cd $SCRATCH
 ls
