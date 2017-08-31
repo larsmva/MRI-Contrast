@@ -45,5 +45,5 @@ cp mri-contrast.py parenchyma.h5 parenchyma.xdmf "MRI0.h5" "MRI1.h5" $SCRATCH
 cd $SCRATCH
 ls
 echo $SCRATCH
-mpirun --bind-to none python nscm.py No_refinements=$1 dt_val=$2 D_val=$3
+mpirun --bind-to none python mri-contrast.py No_refinements=$1 dt_val=$2 D_val=$3
 
