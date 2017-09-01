@@ -37,11 +37,11 @@ U1 = Function(V)
     
 	
 in0= HDF5File(mesh.mpi_comm(),"MRI0.h5","r") # basename
-in0.read(U0,"MRI0")
+in0.read(U0,"/mri0")
 in0.close()
 
 in1 = HDF5File(mesh.mpi_comm(),"MRI1.h5","r")
-in1.read(U1,"MRI1")
+in1.read(U1,"/mri1")
 in1.close()
 
 
