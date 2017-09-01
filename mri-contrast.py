@@ -18,7 +18,7 @@ def boundary(x, on_bounday):
   return on_bounday
 
 mesh = Mesh()
-xdmf =XDMFFile(mesh.mpi_comm(),"pial_mesh.xdmf")
+xdmf =XDMFFile(mesh.mpi_comm(),"parenchyma.xdmf")
 xdmf.read(mesh)
 
 
