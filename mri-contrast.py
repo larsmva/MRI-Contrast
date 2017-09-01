@@ -1,6 +1,6 @@
 from dolfin import *
-from cbcpost import *
-from cbcpost.utils import create_submesh, create_slice
+#from cbcpost import *
+#from cbcpost.utils import create_submesh, create_slice
 
 #default values
 No_refinements=0 
