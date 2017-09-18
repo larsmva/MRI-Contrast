@@ -7,95 +7,93 @@ No_refinements=0
 dt_val=0.1 
 D_val=1.0
 C0=1 
+meshfile = "bad_mesh.xml"
 #hack to read input arguments 
 import sys
-for s in sys.argv[1:]:
-  exec(s)
-  print s
-print "dt_val ", dt_val, " No_ref ", No_refinements , "D" , D_val
 
-def boundary(x, on_bounday): 
-  return on_bounday
-
-mesh = Mesh()
-xdmf =XDMFFile(mesh.mpi_comm(),"parenchyma.xdmf")
-xdmf.read(mesh)
+def boundary(x, on_boundary): 
+  return on_boundary
 
 
-V = FunctionSpace(mesh, "Lagrange", 1)
-
-u = TrialFunction(V)
-v = TestFunction(V)
-
-U = Function(V)   # current U
-U_ = Function(V)  # previous U 
-
-U0 = Function(V)  # initial U
-U1 = Function(V) 
-
-
+if __name__=='__main__':
+	import argparse
+	parser = argparse.ArgumentParser(prog='mri-contrast.py')
+	parser.add_argument('--dt', default=0.1, help='')
+	parser.add_argument('--D',  default=1.0 , help='')
+ 	parser.add_argument('--C', default=1.0, help='')
+	parser.add_argument('--mesh',  default="bad_mesh.xml" , help='')   
+        parser.add_argument('--save_step',  default=20 , help='') 
+        parser.add_argument('--out',  default="mri_contrast.xdmf" , help='')   
+	Z = parser.parse_args()
     
+        mesh = Mesh()
+        if Z.mesh.endswith("xml"):
+           mesh = Mesh(Z.mesh)
+        elif Z.mesh.endswith("xdmf"):
+		xdmf =XDMFFile(mesh.mpi_comm(),Z.mesh)
+		xdmf.read(mesh)
+        else :
+           print "undetermined filetype"
+
+	V = FunctionSpace(mesh, "CG",1)
+
+	u = TrialFunction(V)
+	v = TestFunction(V)
+
+	U = Function(V)   # current U
+	U_ = Function(V)  # previous U 
+
+	U0 = Function(V)  # initial U
+	U1 = Function(V) 
+
 	
-in0= HDF5File(mesh.mpi_comm(),"MRI0.h5","r") # basename
-in0.read(U0,"/mri0")
-in0.close()
+	#in0= HDF5File(mesh.mpi_comm(),"MRI0.h5","r") # basename
+	#in0.read(U0,"/mri0")
+	#in0.close()
 
-in1 = HDF5File(mesh.mpi_comm(),"MRI1.h5","r")
-in1.read(U1,"/mri1")
-in1.close()
-
-
+	#in1 = HDF5File(mesh.mpi_comm(),"MRI1.h5","r")
+	#in1.read(U1,"/mri1")
+	#in1.close()
 
 
-Tend = 18.0
-t = 0.0
-D = Constant(D_val)
-dt = Constant(dt_val)
-
-a = u*v*dx + D*dt*inner(grad(u), grad(v))*dx 
-L = U_*v*dx 
-
-A = assemble(a)
 
 
-#slicemesh_x = create_slice(mesh,(-9.80,4.98,27.24) , (1,0,0))
-#slicemesh_y = create_slice(mesh,(-7.49,4.98,27.24)  ,( 0,1,0))
-#pp =  PostProcessor(dict(casedir="nscmD%sDt%s"%(D_val,dt_val)))
-#pp.add_fields( [SolutionField("Error",dict(save=False)) ,Norm("Error",dict(save=True,plot=True))])
-#pp.add_field(SolutionField("C_X"))
-#pp.add_fields([SubFunction("C_X",slicemesh_x,dict(save=True))])
-#pp.add_field(SolutionField("C_Y"))
-#pp.add_fields([SubFunction("C_Y",slicemesh_y,dict(save=True))])
 
-time_step =0
-_v = Function(V)
-U_.assign(U1)
+	Tend = 18.0
+	t = 0.0
+	D = Constant(Z.D)
+        C = Constant(Z.C)
+	dt = Constant(Z.dt)
 
-save_step=10
-writer = XDMFFile(mesh.mpi_comm(), "mri-contrast.xdmf")
-I = 200
+	a = D*dt*inner(grad(u), grad(v))*dx 
+	L =U_*v*dx  
 
-while t < Tend-dt_val/2:
- 
+	A = assemble(a)
 
-  bc  = DirichletBC( V, I, boundary)  
-  t += dt_val 
-  bc.apply(A)
-  b = assemble(L)
-  bc.apply(b)
-  solve(A, U.vector(), b, "gmres", "amg")
-  
-  E = assemble((U-U3)**2*dx)
-  U_.assign(U)
 
-  if (t%save_step==0):
-     writer.write(U)
+	U_.assign(U0)
 
-  time_step+=1
-  
-  #pp.update_all({"C_X": lambda: U} , t ,time_step ) 
-  #pp.update_all({"C_Y": lambda: U} , t ,time_step )
-  #pp.update_all({"Error":lambda:  E}, t ,time_step )
-  
-#pp.finalize_all()
+
+	time_step =0
+
+
+	writer = XDMFFile(mesh.mpi_comm(), Z.out)
+
+	while t < Tend-dt_val/2:
+	 
+
+	  bc  = DirichletBC(V, C, boundary)  
+	  t += dt_val 
+	  bc.apply(A)
+	  b = assemble(L)
+	  bc.apply(b)
+	  solve(A, U.vector(), b, "gmres", "amg")
+
+	  U_.assign(U)
+	  
+	  if (time_step%Z.save_step==0):
+	     writer.write(U,time_step)
+	  
+	  time_step+=1
+          print time_step	  
 
