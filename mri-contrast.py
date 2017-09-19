@@ -15,7 +15,7 @@ if __name__=='__main__':
 	parser.add_argument('--D',  default=1.0, type=float , help='')
  	parser.add_argument('--C', default=1.0,  type=float ,help='')
 	parser.add_argument('--mesh',  default="bad_mesh.xml" , help='')   
-        parser.add_argument('--save_step',  default=20, type=int , help='') 
+        parser.add_argument('--save_step',  default=2, type=int , help='') 
         parser.add_argument('--out',  default="mri-contrast.xdmf",type=str , help='')   
         parser.add_argument('--init',  default="" , type=str, help='')  
         parser.add_argument('--Tend',  default=8.0 , type=float, help='')  
