@@ -2,14 +2,6 @@ from dolfin import *
 #from cbcpost import *
 #from cbcpost.utils import create_submesh, create_slice
 
-#default values
-No_refinements=0 
-dt_val=0.1 
-D_val=1.0
-C0=1 
-meshfile = "bad_mesh.xml"
-#hack to read input arguments 
-import sys
 
 def boundary(x, on_boundary): 
   return on_boundary
@@ -17,13 +9,16 @@ def boundary(x, on_boundary):
 
 if __name__=='__main__':
 	import argparse
+        import sys
 	parser = argparse.ArgumentParser(prog='mri-contrast.py')
-	parser.add_argument('--dt', default=0.1, help='')
-	parser.add_argument('--D',  default=1.0 , help='')
- 	parser.add_argument('--C', default=1.0, help='')
+	parser.add_argument('--dt', default=0.1, type=float, help='')
+	parser.add_argument('--D',  default=1.0, type=float , help='')
+ 	parser.add_argument('--C', default=1.0,  type=float ,help='')
 	parser.add_argument('--mesh',  default="bad_mesh.xml" , help='')   
-        parser.add_argument('--save_step',  default=20 , help='') 
-        parser.add_argument('--out',  default="mri_contrast.xdmf" , help='')   
+        parser.add_argument('--save_step',  default=20, type=int , help='') 
+        parser.add_argument('--out',  default="mri_contrast.xdmf",type=str , help='')   
+        parser.add_argument('--init',  default="" , type=str, help='')  
+        parser.add_argument('--Tend',  default=8.0 , type=float, help='')  
 	Z = parser.parse_args()
     
         mesh = Mesh()
@@ -34,7 +29,11 @@ if __name__=='__main__':
 		xdmf.read(mesh)
         else :
            print "undetermined filetype"
+           sys.exit()
 
+
+
+####################################################
 	V = FunctionSpace(mesh, "CG",1)
 
 	u = TrialFunction(V)
@@ -44,55 +43,74 @@ if __name__=='__main__':
 	U_ = Function(V)  # previous U 
 
 	U0 = Function(V)  # initial U
-	U1 = Function(V) 
+        Ub = Function(V)  # initial U
 
-	
-	#in0= HDF5File(mesh.mpi_comm(),"MRI0.h5","r") # basename
-	#in0.read(U0,"/mri0")
-	#in0.close()
+##################################################   
 
-	#in1 = HDF5File(mesh.mpi_comm(),"MRI1.h5","r")
-	#in1.read(U1,"/mri1")
-	#in1.close()
+        dt_ = float(Z.dt)
 
+	D = Constant(float(Z.D))
+        C = Constant(float(Z.C))
+	dt = Constant(dt_)
+        Tend = Z.Tend
 
-
-
-
-	Tend = 18.0
-	t = 0.0
-	D = Constant(Z.D)
-        C = Constant(Z.C)
-	dt = Constant(Z.dt)
-
-	a = D*dt*inner(grad(u), grad(v))*dx 
+#############################################################      
+	a =u*v*dx+ D*dt*inner(grad(u), grad(v))*dx 
 	L =U_*v*dx  
+############################################################
+
+        if Z.init=="" :
+          bc  = DirichletBC(V, C, boundary ) 
+          U0.vector()[:]=0
+        elif Z.mesh.endswith("h5"):
+          in0= HDF5File(mesh.mpi_comm(),Z.init,"r") # basename
+	  in0.read(U0,"/mric")
+          in0.close()
+        else :
+           print "undetermined filetype" 
+           sys.exit()
+
+###########################################################
 
 	A = assemble(a)
-
-
+        bc.apply(A)
+	b = assemble(L)
+        bc.apply(b)
 	U_.assign(U0)
 
-
+   
+	t = 0.0
 	time_step =0
-
-
+        
+        
 	writer = XDMFFile(mesh.mpi_comm(), Z.out)
+        """
+          Diffusion on surface :: 
 
-	while t < Tend-dt_val/2:
+          use prevoius solution boundary as dirichlet  ? 
+
+          bc = DirichletBC(V,U, boundary)
+          check Abel
+        """
+#################################################################
+	while t < Tend-dt_/2:
+
+
+	  t += dt_
+	  solve(A, U.vector(), b, "gmres", "amg")
 	 
 
-	  bc  = DirichletBC(V, C, boundary)  
-	  t += dt_val 
-	  bc.apply(A)
-	  b = assemble(L)
-	  bc.apply(b)
-	  solve(A, U.vector(), b, "gmres", "amg")
+##################################################################
+	  a = U.vector()[:]
+          b=  U.vector()[:]
+          b[a>b]  = a[a>b]
+          Ub.vector()[:] = b
 
-	  U_.assign(U)
-	  
+#################################################################
+
+          U_.assign(U)
 	  if (time_step%Z.save_step==0):
-	     writer.write(U,time_step)
+	     writer.write(U, t) 
 	  
 	  time_step+=1
           print time_step	  
