@@ -45,5 +45,5 @@ cp mri-contrast.py $1 "${1%.*}.h5" $SCRATCH
 cd $SCRATCH
 ls
 echo $SCRATCH
-mpirun --bind-to none python mri-contrast.py --mesh=$1 --dt_val=$2 --D=$3 --C=$4
+mpirun --bind-to none python mri-contrast.py --mesh=$1 --dt=$2 --D=$3 --C=$4
 
