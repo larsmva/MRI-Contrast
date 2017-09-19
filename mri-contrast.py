@@ -15,7 +15,7 @@ if __name__=='__main__':
 	parser.add_argument('--D',  default=1.0, type=float , help='')
  	parser.add_argument('--C', default=1.0,  type=float ,help='')
 	parser.add_argument('--mesh',  default="bad_mesh.xml" , help='')   
-        parser.add_argument('--save_step',  default=20, type=int , help='') 
+        parser.add_argument('--save_step',  default=2, type=int , help='') 
         parser.add_argument('--out',  default="mri-contrast.xdmf",type=str , help='')   
         parser.add_argument('--init',  default="" , type=str, help='')  
         parser.add_argument('--Tend',  default=8.0 , type=float, help='')  
@@ -59,16 +59,13 @@ if __name__=='__main__':
 	L =U_*v*dx  
 ############################################################
 
-        if Z.init=="" :
-          bc  = DirichletBC(V, C, boundary ) 
-          U0.vector()[:]=0
-        elif Z.mesh.endswith("h5"):
+        if Z.mesh.endswith("h5"):
           in0= HDF5File(mesh.mpi_comm(),Z.init,"r") # basename
 	  in0.read(U0,"/mric")
           in0.close()
         else :
-           print "undetermined filetype" 
-           sys.exit()
+          bc  = DirichletBC(V, C, boundary ) 
+          U0.vector()[:]=0
 
 ###########################################################
 
@@ -111,7 +108,8 @@ if __name__=='__main__':
           U_.assign(U)
 	  if (time_step%Z.save_step==0):
 	     writer.write(U, t) 
-	  
+
+	  File("df.pvd") << U 
 	  time_step+=1
           print time_step	  
 
