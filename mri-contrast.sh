@@ -40,10 +40,10 @@ cleanup "cp -r $SCRATCH/mri-contrast* $HOME/results"
 echo "SCRATCH is $SCRATCH"
 
 # Copy necessary files to $SCRATCH
-cp mri-contrast.py $1 "${1%.*}.h5" $SCRATCH
+cp mri-contrast.py $1 "${1%.*}.h5" $5 $SCRATCH
 
 cd $SCRATCH
 ls
 echo $SCRATCH
-mpirun --bind-to none python mri-contrast.py --mesh=$1 --dt=$2 --D=$3 --C=$4
+mpirun --bind-to none python mri-contrast.py --mesh=$1 --dt=$2 --D=$3 --C=$4 --init=$5 
 

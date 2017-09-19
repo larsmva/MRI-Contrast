@@ -63,6 +63,7 @@ if __name__=='__main__':
           in0= HDF5File(mesh.mpi_comm(),Z.init,"r") # basename
 	  in0.read(U0,"/mric")
           in0.close()
+          bc  = DirichletBC(V, U0, boundary ) 
         else :
           bc  = DirichletBC(V, C, boundary ) 
           U0.vector()[:]=0
@@ -81,14 +82,7 @@ if __name__=='__main__':
         
         
 	writer = XDMFFile(mesh.mpi_comm(), Z.out)
-        """
-          Diffusion on surface :: 
 
-          use prevoius solution boundary as dirichlet  ? 
-
-          bc = DirichletBC(V,U, boundary)
-          check Abel
-        """
 #################################################################
 	while t < Tend-dt_/2:
 
@@ -103,13 +97,19 @@ if __name__=='__main__':
           b[a>b]  = a[a>b]
           Ub.vector()[:] = b
 
+         
 #################################################################
+          #b = assemble(L)
+          #bc  = DirichletBC(V, Ub, boundary ) 
+          #bc.apply(b)
 
+#################################################################
           U_.assign(U)
 	  if (time_step%Z.save_step==0):
-	     writer.write(U, time_step) 
-
+	     writer.write(U, time_step)
+             
+             print time_step 
+          time_step+=1
 	
-	  time_step+=1
-          print time_step	  
+	  
 
