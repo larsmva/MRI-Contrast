@@ -107,9 +107,9 @@ if __name__=='__main__':
 
           U_.assign(U)
 	  if (time_step%Z.save_step==0):
-	     writer.write(U, t) 
+	     writer.write(U, time_step) 
 
-	  File("df.pvd") << U 
+	
 	  time_step+=1
           print time_step	  
 
