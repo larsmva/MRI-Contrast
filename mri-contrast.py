@@ -97,7 +97,7 @@ if __name__=='__main__':
 
 
 	  t += dt_
-	  solve(A, U.vector(), b, "gmres", "amg")
+	  solve(A, U.vector(), b, "gmres", "ilu")
 	 
 
 ##################################################################
