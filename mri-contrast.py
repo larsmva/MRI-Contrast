@@ -96,7 +96,7 @@ if __name__=='__main__':
         
               
 	#writer = XDMFFile(mesh.mpi_comm(), Z.out)
-        outfile = File("results/mri-contrast.pvd") 
+        outfile = File("resultsD%sdt%s/mri-contrast.pvd"%(Z.D,Z.dt)) 
         
      
         print "solving"

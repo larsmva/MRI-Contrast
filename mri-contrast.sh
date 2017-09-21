@@ -35,7 +35,7 @@ export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python2.7/site-packages/
 
 # Define what to do when job is finished (or crashes)
 cleanup "mkdir -p $HOME/results"
-cleanup "cp -r $SCRATCH/results  $HOME/results" 
+cleanup "cp -r $SCRATCH/results*  $HOME/results" 
 
 echo "SCRATCH is $SCRATCH"
 
