@@ -20,7 +20,7 @@ if __name__=='__main__':
         parser.add_argument('--init',  default="" , type=str, help='')  
         parser.add_argument('--Tend',  default=12.0 , type=float, help='')  
 	Z = parser.parse_args()
-    
+        print Z
         mesh = Mesh()
         if Z.mesh.endswith("xml"):
            mesh = Mesh(Z.mesh)
@@ -43,8 +43,8 @@ if __name__=='__main__':
 	U_ = Function(V)  # previous U 
 
 	U0 = Function(V)  # initial U
-        Ub = Function(V)  # initial U
-
+       
+        
 ##################################################   
 
         dt_ = float(Z.dt)
@@ -53,11 +53,9 @@ if __name__=='__main__':
         C = Constant(float(Z.C))
 	dt = Constant(dt_)
         Tend = Z.Tend
+    
+ 
 
-#############################################################      
-	a =u*v*dx+ D*dt*inner(grad(u), grad(v))*dx 
-	L =U_*v*dx  
-############################################################
 
         if Z.init.endswith("h5"):
           in0= HDF5File(mesh.mpi_comm(),Z.init,"r") # basename
@@ -70,15 +68,29 @@ if __name__=='__main__':
           bc  = DirichletBC(V, C, boundary ) 
           U0.vector()[:]=0
 
-###########################################################
+#############################################################      
+	a =u*v*dx + D*dt*inner(grad(u), grad(v))*dx 
+	L =U_*v*dx  
 
-	A = assemble(a)
-        bc.apply(A)
-	b = assemble(L)
-        bc.apply(b)
-	U_.assign(U0)
+
+
+###########################################################
+        action_form = action(a, Constant(1))
+	#A = assemble(a)
+        A = assemble(a)
+        A.zero()
+        A.set_diagonal(assemble(action_form))
+
+
+        U_.assign(U0)
+  
+	
+   
+	
 
    
+
+          
 	t = 0.0
 	time_step =0
         
@@ -86,31 +98,27 @@ if __name__=='__main__':
 	#writer = XDMFFile(mesh.mpi_comm(), Z.out)
         outfile = File("results/mri-contrast.pvd") 
         
- #       pp = PostProcessor(dict(casedir="mri-contrast/"))
-#        pp.add_field(SolutionField("Concentration",dict(save=True),save_as=["hdf5","xdmf"]))        
+     
         print "solving"
 #################################################################
 	while t < Tend-dt_/2:
 
 
 	  t += dt_
-	  solve(A, U.vector(), b, "gmres")
-	 
 
-##################################################################
+          b = assemble(L)
+          bc.apply(b)
+          bc.apply(A)
 
-         
-#################################################################
-          #b = assemble(L)
-          #bc  = DirichletBC(V, Ub, boundary ) 
-          #bc.apply(b)
+	  solve(A, U.vector(), b, "gmres" , "amg" )
 
-#################################################################
+          print assemble((U-U_)**2*dx)
           U_.assign(U)
- #         pp.update_all({"Concentration": lambda : U }, t, time_step)
-	  if time_step%200==0:
+          U.vector()[:]
+################################################################
+       
+	  if time_step%2==0:
                outfile << U 
           time_step+=1
 	 
-#pp.finalize_all()
-outfile << U
+
