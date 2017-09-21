@@ -16,9 +16,9 @@ if __name__=='__main__':
  	parser.add_argument('--C', default=1.0,  type=float ,help='')
 	parser.add_argument('--mesh',  default="bad_mesh.xml" , help='')   
         parser.add_argument('--save_step',  default=2, type=int , help='') 
-        parser.add_argument('--out',  default="mri-contrast.xdmf",type=str , help='')   
+        parser.add_argument('--out',  default="mri-contrast",type=str , help='')   
         parser.add_argument('--init',  default="" , type=str, help='')  
-        parser.add_argument('--Tend',  default=8.0 , type=float, help='')  
+        parser.add_argument('--Tend',  default=12.0 , type=float, help='')  
 	Z = parser.parse_args()
     
         mesh = Mesh()
@@ -59,11 +59,13 @@ if __name__=='__main__':
 	L =U_*v*dx  
 ############################################################
 
-        if Z.mesh.endswith("h5"):
+        if Z.init.endswith("h5"):
           in0= HDF5File(mesh.mpi_comm(),Z.init,"r") # basename
 	  in0.read(U0,"/mric")
           in0.close()
-          bc  = DirichletBC(V, U0, boundary ) 
+          C = U0.vector().array().max() #5000 # parallel
+          bc  = DirichletBC(V, C, boundary ) 
+          print C
         else :
           bc  = DirichletBC(V, C, boundary ) 
           U0.vector()[:]=0
@@ -80,22 +82,22 @@ if __name__=='__main__':
 	t = 0.0
 	time_step =0
         
+              
+	#writer = XDMFFile(mesh.mpi_comm(), Z.out)
+        outfile = File("results/mri-contrast.pvd") 
         
-	writer = XDMFFile(mesh.mpi_comm(), Z.out)
-
+ #       pp = PostProcessor(dict(casedir="mri-contrast/"))
+#        pp.add_field(SolutionField("Concentration",dict(save=True),save_as=["hdf5","xdmf"]))        
+        print "solving"
 #################################################################
 	while t < Tend-dt_/2:
 
 
 	  t += dt_
-	  solve(A, U.vector(), b, "gmres", "ilu")
+	  solve(A, U.vector(), b, "gmres")
 	 
 
 ##################################################################
-	  a = U.vector()[:]
-          b=  U.vector()[:]
-          b[a>b]  = a[a>b]
-          Ub.vector()[:] = b
 
          
 #################################################################
@@ -105,11 +107,10 @@ if __name__=='__main__':
 
 #################################################################
           U_.assign(U)
-	  if (time_step%Z.save_step==0):
-	     writer.write(U, time_step)
-             
-             print time_step 
+ #         pp.update_all({"Concentration": lambda : U }, t, time_step)
+	  if time_step%200==0:
+               outfile << U 
           time_step+=1
-	
-	  
-
+	 
+#pp.finalize_all()
+outfile << U
