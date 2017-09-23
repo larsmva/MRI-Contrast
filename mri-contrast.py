@@ -15,7 +15,6 @@ if __name__=='__main__':
 	parser.add_argument('--D',  default=1.0, type=float , help='')
  	parser.add_argument('--C', default=1.0,  type=float ,help='')
 	parser.add_argument('--mesh',  default="bad_mesh.xml" , help='')   
-        parser.add_argument('--save_step',  default=2, type=int , help='') 
         parser.add_argument('--out',  default="mri-contrast",type=str , help='')   
         parser.add_argument('--init',  default="" , type=str, help='')  
         parser.add_argument('--Tend',  default=12.0 , type=float, help='')  
@@ -54,7 +53,7 @@ if __name__=='__main__':
 	dt = Constant(dt_)
         Tend = Z.Tend
     
- 
+        print Z.D, Tend   
 
 
         if Z.init.endswith("h5"):
@@ -69,19 +68,22 @@ if __name__=='__main__':
           U0.vector()[:]=0
 
 #############################################################      
-	a =u*v*dx + D*dt*inner(grad(u), grad(v))*dx 
-	L =U_*v*dx  
+	m =u*v*dx 
+	k = dt*D*inner(grad(v),grad(u))*dx
+
+        L =U_*v*dx  
 
 
 
 ###########################################################
-        action_form = action(a, Constant(1))
+        action_form = action(m, Constant(1))
 	#A = assemble(a)
-        A = assemble(a)
-        A.zero()
-        A.set_diagonal(assemble(action_form))
-
-
+        M= assemble(m)
+        M.zero()
+        M.set_diagonal(assemble(action_form))
+          
+        K = assemble(k)
+        A = M+K
         U_.assign(U0)
   
 	
@@ -94,10 +96,12 @@ if __name__=='__main__':
 	t = 0.0
 	time_step =0
         
-              
+        save_resolution=0.1      
 	#writer = XDMFFile(mesh.mpi_comm(), Z.out)
         outfile = File("resultsD%sdt%s/mri-contrast.pvd"%(Z.D,Z.dt)) 
         
+        save_step = save_resolution*(Tend/dt_)
+        print save_step 
      
         print "solving"
 #################################################################
@@ -117,7 +121,7 @@ if __name__=='__main__':
           U.vector()[:]
 ################################################################
        
-	  if time_step%2==0:
+	  if time_step%save_step==0:
                outfile << U 
           time_step+=1
 	 
