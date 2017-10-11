@@ -96,13 +96,13 @@ if __name__=='__main__':
        
         print dt
 ###########################################################
-        dia =  assemble (action(m, Constant(1)))
-	M= assemble(m)
-        M.zero()
-        M.set_diagonal(dia)
+        #dia =  assemble (action(m, Constant(1)))
+	#M= assemble(m)
+        #M.zero()
+        #M.set_diagonal(dia)
           
-        K = assemble(k)
-        A = M+K
+        #K = assemble(k)
+        #A = M+K
       
         a = u*v*dx + dt*Constant(Z.D)*dot(grad(v),grad(u))*dx
 	A =assemble(a)
@@ -113,20 +113,20 @@ if __name__=='__main__':
 	t = 0.0
 	time_step =0
         
-        save_resolution=0.01      
+            
 
         outfile = File("results%sD%sdt%s/mri-contrast.pvd"%(Z.out,Z.D,Z.dt)) 
+        outfile2 = File("results%sD%sdt%s/mri-BPII.pvd"%(Z.out,Z.D,Z.dt))
         
-        save_step = save_resolution*(Tend/dt_)
-
+        
      
         print "solving"
 #################################################################
-	while t < Tend+dt_/2:
+	while t < Tend-dt_/2:
 
 
 	  t += dt_
-
+        
           b = assemble(L)
           bc.apply(b)
           
@@ -134,15 +134,14 @@ if __name__=='__main__':
 	  solve(A, U.vector(), b)
 
           U_.assign(U)
-
+          
 ################################################################
-         
-	  if time_step%save_step==0: 
+          print t, time_step, (t%0.5==0)    
+	  if (time_step%100==0): 
                bpii.vector()[:] = BPII(U.vector().array())
                outfile << U
-               print time_step
-               
-          time_step+=1
+               outfile2 << bpii
+               print "saveing"
 	 
-        
+          time_step+=1
 

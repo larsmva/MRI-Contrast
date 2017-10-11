@@ -12,7 +12,7 @@
 #
 # Number of tasks (cores):
 ##SBATCH --nodes=1 --ntasks=15
-#SBATCH --ntasks=1
+#SBATCH --ntasks=2
 ##SBATCH --hint=compute_bound
 #SBATCH --cpus-per-task=1
 
@@ -35,7 +35,7 @@ export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python2.7/site-packages/
 
 # Define what to do when job is finished (or crashes)
 cleanup "mkdir -p $HOME/results"
-cleanup "cp -r $SCRATCH/results*  $HOME/results" 
+cleanup "cp -r $SCRATCH/res*  $HOME/results" 
 
 echo "SCRATCH is $SCRATCH"
 
@@ -45,5 +45,5 @@ cp mri-contrast.py $1 "${1%.*}.h5" $4 $SCRATCH
 cd $SCRATCH
 ls
 echo $SCRATCH
-mpirun --bind-to none python mri-contrast.py --mesh=$1 --dt=$2 --D=$3 --init=$4 
+mpirun --bind-to none python mri-contrast.py --mesh=$1 --dt=$2 --D=$3 --init=$4 --out=$5 
 
